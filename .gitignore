@@ -3,7 +3,7 @@ datas/wavs
 /logs/
 RAVDE.npy
 __pycache__
-datas
+/datas/
 cleaned_tth_data
 *.npy
 dev.ipynb

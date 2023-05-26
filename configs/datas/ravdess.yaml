@@ -1,0 +1,26 @@
+sample_rate: 48000
+augment: 'None'
+wavs_path: ess_dataset/tth/wavs
+label_path: tth_label_wav_less_than_1s_sample.txt
+feature: npy
+
+npy_path: RAVDE.npy
+
+label:
+  neutral: 0
+  angry: 1
+  happy: 2
+  sad: 3
+  calm: 4
+  fearful: 5
+  disgust: 6
+  surprised: 7
+
+mfcc:
+  sample_rate: *sample_rate
+  hop_length: 256
+  win_length: 1024
+  n_mfcc: 39
+  n_mels: 128
+  fmax: 8000
+  fmin: 40

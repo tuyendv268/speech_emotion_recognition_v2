@@ -1,0 +1,26 @@
+augment: spec_augment
+wavs_path: cleaned_tth_data/wavs
+label_path: cleaned_tth_data/train.txt
+feature: mel
+npy_path: tth_train.npy
+
+train_path: tth_train.npy
+test_path: tth_test.npy
+
+audio:
+  sample_rate: 22050
+  max_wav_value: 32768.0
+stft:
+  filter_length: 1024
+  hop_length: 256
+  win_length: 1024
+mel:
+  n_mel_channels: 80
+  mel_fmin: 0
+  mel_fmax: 8000
+
+label:
+  neutral: 0
+  angry: 1
+  happy: 2
+  sad: 3
