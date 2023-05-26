@@ -252,8 +252,8 @@ class Trainer():
         with torch.no_grad():
             losses = []
             for i, batch in enumerate(valid_dl):
-                features = batch["feature"].to(self.device)
-                _labels = batch["label"].to(self.device)
+                features = batch["feature"].float().to(self.device)
+                _labels = batch["label"].float().to(self.device)
                 masks = batch["mask"].to(self.device)
                 
                 _, preds = model(inputs=features, masks=masks)
