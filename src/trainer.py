@@ -198,15 +198,15 @@ class Trainer():
                 #     path = f'{self.config["checkpoint_dir"]}/best_acc_checkpoint.pt'
                 #     self.save_checkpoint(path, model=model, optimizer=optimizer, epoch=epoch, loss=train_loss)
                     
-                # if best_wa < valid_cls_result["weighted avg"]["recall"]:
-                #     best_wa = valid_cls_result["weighted avg"]["f1-score"]
-                #     path = f'{self.config["checkpoint_dir"]}/best_war_checkpoint.pt'
-                #     self.save_checkpoint(path, model=model, optimizer=optimizer, epoch=epoch, loss=train_loss)
-                                            
-                if best_uwa < valid_cls_result["macro avg"]["f1-score"]:
-                    best_uwa = valid_cls_result["macro avg"]["f1-score"]
-                    path = f'{self.config["checkpoint_dir"]}/best_uwar_checkpoint.pt'
+                if best_wa < valid_cls_result["weighted avg"]["recall"]:
+                    best_wa = valid_cls_result["weighted avg"]["f1-score"]
+                    path = f'{self.config["checkpoint_dir"]}/best_war_checkpoint.pt'
                     self.save_checkpoint(path, model=model, optimizer=optimizer, epoch=epoch, loss=train_loss)
+                                            
+                # if best_uwa < valid_cls_result["macro avg"]["f1-score"]:
+                #     best_uwa = valid_cls_result["macro avg"]["f1-score"]
+                #     path = f'{self.config["checkpoint_dir"]}/best_uwar_checkpoint.pt'
+                #     self.save_checkpoint(path, model=model, optimizer=optimizer, epoch=epoch, loss=train_loss)
                 
                 # kfold_tqdm.write("############################################")
                 _train_tqdm.write(
@@ -222,11 +222,11 @@ class Trainer():
                 # path = f'{self.config["checkpoint_dir"]}/best_acc_checkpoint.pt'
                 # self.test(checkpoint=path,test_dl=self.test_dl)
                 
-                # path = f'{self.config["checkpoint_dir"]}/best_war_checkpoint.pt'
-                # self.test(checkpoint=path,test_dl=self.test_dl)
-                
-                path = f'{self.config["checkpoint_dir"]}/best_uwar_checkpoint.pt'
+                path = f'{self.config["checkpoint_dir"]}/best_war_checkpoint.pt'
                 self.test(checkpoint=path,test_dl=self.test_dl)
+                
+                # path = f'{self.config["checkpoint_dir"]}/best_uwar_checkpoint.pt'
+                # self.test(checkpoint=path,test_dl=self.test_dl)
                  
         # with open(f'{self.config["model_config"]}.txt', "w", encoding="utf-8") as f:
         #     np_results = np.array(results).mean(axis=0).tolist()
