@@ -1,6 +1,7 @@
 from torch.utils.data import Dataset
 from src.utils import spec_augment
 import torch
+import numpy as np
 
 class SER_Dataset(Dataset):
     def __init__(self, features, labels, masks, mode="train"):
@@ -13,6 +14,7 @@ class SER_Dataset(Dataset):
         return self.features.shape[0]
     
     def smooth_labels(self, labels, factor=0.1):
+        labels = labels.astype(np.float32)
         labels *= (1 - factor)
         labels += (factor / labels.shape[0])
         return labels
