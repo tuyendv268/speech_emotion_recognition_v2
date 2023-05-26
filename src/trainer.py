@@ -150,10 +150,10 @@ class Trainer():
         optimizer = self.init_optimizer(model)
         
         model.train()
+        best_acc, best_wa, best_uwa = -1, -1, -1
         for epoch in range(int(self.config["n_epoch"])):
             train_losses, valid_losses = [], []
-            _train_tqdm = tqdm(self.train_dl, desc="Training ")
-            best_acc, best_wa, best_uwa = -1, -1, -1
+            _train_tqdm = tqdm(self.train_dl, desc=f"Epoch={epoch}")
             for i, batch in enumerate(_train_tqdm):
                 optimizer.zero_grad()
                 
@@ -193,15 +193,15 @@ class Trainer():
                     output_dict=True, zero_division=0,
                     target_names=target_names)  
                 
-                if best_acc < valid_cls_result["accuracy"]:
-                    best_acc = valid_cls_result["accuracy"]
-                    path = f'{self.config["checkpoint_dir"]}/best_acc_checkpoint.pt'
-                    self.save_checkpoint(path, model=model, optimizer=optimizer, epoch=epoch, loss=train_loss)
+                # if best_acc < valid_cls_result["accuracy"]:
+                #     best_acc = valid_cls_result["accuracy"]
+                #     path = f'{self.config["checkpoint_dir"]}/best_acc_checkpoint.pt'
+                #     self.save_checkpoint(path, model=model, optimizer=optimizer, epoch=epoch, loss=train_loss)
                     
-                if best_wa < valid_cls_result["weighted avg"]["recall"]:
-                    best_wa = valid_cls_result["weighted avg"]["f1-score"]
-                    path = f'{self.config["checkpoint_dir"]}/best_war_checkpoint.pt'
-                    self.save_checkpoint(path, model=model, optimizer=optimizer, epoch=epoch, loss=train_loss)
+                # if best_wa < valid_cls_result["weighted avg"]["recall"]:
+                #     best_wa = valid_cls_result["weighted avg"]["f1-score"]
+                #     path = f'{self.config["checkpoint_dir"]}/best_war_checkpoint.pt'
+                #     self.save_checkpoint(path, model=model, optimizer=optimizer, epoch=epoch, loss=train_loss)
                                             
                 if best_uwa < valid_cls_result["macro avg"]["f1-score"]:
                     best_uwa = valid_cls_result["macro avg"]["f1-score"]
@@ -219,11 +219,11 @@ class Trainer():
                         "train_loss":train_loss
                         })
                     )  
-                path = f'{self.config["checkpoint_dir"]}/best_acc_checkpoint.pt'
-                self.test(checkpoint=path,test_dl=self.test_dl)
+                # path = f'{self.config["checkpoint_dir"]}/best_acc_checkpoint.pt'
+                # self.test(checkpoint=path,test_dl=self.test_dl)
                 
-                path = f'{self.config["checkpoint_dir"]}/best_war_checkpoint.pt'
-                self.test(checkpoint=path,test_dl=self.test_dl)
+                # path = f'{self.config["checkpoint_dir"]}/best_war_checkpoint.pt'
+                # self.test(checkpoint=path,test_dl=self.test_dl)
                 
                 path = f'{self.config["checkpoint_dir"]}/best_uwar_checkpoint.pt'
                 self.test(checkpoint=path,test_dl=self.test_dl)
