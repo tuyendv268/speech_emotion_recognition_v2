@@ -254,7 +254,7 @@ class Trainer():
             for i, batch in enumerate(valid_dl):
                 features = batch["feature"].float().to(self.device)
                 _labels = batch["label"].float().to(self.device)
-                masks = batch["mask"].to(self.device)
+                masks = batch["mask"].int().to(self.device)
                 
                 _, preds = model(inputs=features, masks=masks)
                 
