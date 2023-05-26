@@ -157,9 +157,9 @@ class Trainer():
             for i, batch in enumerate(_train_tqdm):
                 optimizer.zero_grad()
                 
-                features = batch["feature"].to(self.device)
-                labels = batch["label"].to(self.device)
-                masks = batch["mask"].to(self.device)
+                features = batch["feature"].float().to(self.device)
+                labels = batch["label"].float().to(self.device)
+                masks = batch["mask"].bool().to(self.device)
                 
                 _, preds = model(inputs=features, masks=masks)
                 
@@ -254,7 +254,7 @@ class Trainer():
             for i, batch in enumerate(valid_dl):
                 features = batch["feature"].float().to(self.device)
                 _labels = batch["label"].float().to(self.device)
-                masks = batch["mask"].int().to(self.device)
+                masks = batch["mask"].bool().to(self.device)
                 
                 _, preds = model(inputs=features, masks=masks)
                 
