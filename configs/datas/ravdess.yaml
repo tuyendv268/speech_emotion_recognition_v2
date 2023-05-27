@@ -5,7 +5,11 @@ feature: mfcc
 npy_path: tth_test.npy
 
 train_path: ravdess.npy
-test_path: ravdess.npy
+define: &hidden_dim 39
+hidden_dim: *hidden_dim
+
+valid_size: 0.1
+test_size: 0.1
 
 label:
   neutral: 0
@@ -16,13 +20,14 @@ label:
   fearful: 5
   disgust: 6
   surprised: 7
+
 audio:
   sample_rate: 48000
 
 mfcc:
   hop_length: 256
   win_length: 1024
-  n_mfcc: 39
+  n_mfcc: *hidden_dim
   n_mels: 128
   fmax: 8000
   fmin: 40

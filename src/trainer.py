@@ -11,7 +11,7 @@ from time import time
 from src import utils
 import numpy as np
 from torch import nn
-import shutil
+import logging
 import random
 import json
 import torch
@@ -22,6 +22,21 @@ from src.models.tim_net import TimNet
 from src.dataset import SER_Dataset
 from src.models.conformer import CNN_Conformer
 
+current_time = datetime.now()
+current_time = current_time.strftime("%d-%m-%Y_%H:%M:%S")
+
+if not os.path.exists("logs"):
+    os.mkdir("logs")
+    
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.FileHandler(f"logs/log_{current_time}.log"),
+        logging.StreamHandler()
+    ]
+)
+
 class Trainer():
     def __init__(self, config) -> None:
         self.config = config
@@ -30,6 +45,14 @@ class Trainer():
         
         with open(self.config["data_config"]) as f:
             self.data_config = yaml.load(f, Loader=SafeLoader)
+            
+        json_obj = json.dumps(self.data_config, indent=4, ensure_ascii=False)
+        logging.info("data config: ")
+        logging.info(json_obj)
+        
+        json_obj = json.dumps(self.config, indent=4, ensure_ascii=False)
+        logging.info("general config: ")
+        logging.info(json_obj)
 
         self.prepare_diretories_and_logger()
         self.cre_loss = torch.nn.CrossEntropyLoss()
@@ -38,24 +61,27 @@ class Trainer():
             train_features, train_masks, train_labels = utils.load_data(
                 path=self.data_config["train_path"]
             )
-            print(train_features.shape)
-            print(train_labels.shape)
-            print(train_masks.shape)
-            # train_features, valid_features, train_masks, valid_masks, train_labels, valid_labels = train_test_split(
-            #     train_features, train_labels, train_masks, test_size=self.config["valid_size"], random_state=self.config["random_seed"]
-            # )
-            # test_features, test_masks, test_labels = utils.load_data(
-            #     path=self.data_config["test_path"]
-            # )
+            if config["data_config"].endswith("ravdess.yaml"):
+                train_features, valid_features, train_masks, valid_masks, train_labels, valid_labels = train_test_split(
+                    train_features, train_masks, train_labels, test_size=self.data_config["valid_size"], random_state=self.config["random_seed"]
+                )
+                train_features, test_features, train_masks, test_masks, train_labels, test_labels = train_test_split(
+                    train_features, train_masks, train_labels, test_size=self.data_config["test_size"], random_state=self.config["random_seed"]
+                )
+                
+            elif config["data_config"].endswith("tth_vlsp.yaml"):
+                test_features, test_masks, test_labels = utils.load_data(
+                    path=self.data_config["test_path"]
+                )
+                
+                test_features, valid_features, test_masks, valid_masks, test_labels, valid_labels = train_test_split(
+                    test_features, test_masks, test_labels, test_size=self.data_config["valid_size"], random_state=self.config["random_seed"]
+                )
+                
+            logging.info(f"train size: {train_features.shape}")
+            logging.info(f"val size: {valid_features.shape} ")
+            logging.info(f"test size: {test_features.shape}")
             
-            test_features, test_masks, test_labels = utils.load_data(
-                path=self.data_config["test_path"]
-            )
-            
-            test_features, valid_features, test_masks, valid_masks, test_labels, valid_labels = train_test_split(
-                test_features, test_masks, test_labels, test_size=self.config["valid_size"], random_state=self.config["random_seed"]
-            )
-
             self.train_dl = self.prepare_dataloader(train_features, train_labels, train_masks, mode="train")
             self.valid_dl = self.prepare_dataloader(valid_features, valid_labels, valid_masks, mode="test")
             self.test_dl = self.prepare_dataloader(test_features, test_labels, test_masks, mode="test")
@@ -66,14 +92,14 @@ class Trainer():
         model = self.init_model()
         model_parameters = filter(lambda p: p.requires_grad, model.parameters())
         params = sum([np.prod(p.size()) for p in model_parameters])
-        print(f"num params: {params}")
+        logging.info(f"num params: {params}")
         
     def init_weight(self, layer):
         if isinstance(layer, nn.Linear):
             torch.nn.init.xavier_uniform_(layer.weight)
 
     def set_random_state(self, seed):
-        print(f'set random_seed = {seed}')
+        logging.info(f'set random_seed = {seed}')
         torch.manual_seed(seed)
         torch.cuda.manual_seed(seed)
         # torch.backends.cudnn.deterministic = True
@@ -88,12 +114,12 @@ class Trainer():
         log_dir = f"{self.config['log_dir']}/{current_time}"
         if not os.path.exists(log_dir):
             os.makedirs(log_dir)
-            print(f"logging into {log_dir}")
+            logging.info(f"logging into {log_dir}")
             
         checkpoint_dir = self.config["checkpoint_dir"]
         if not os.path.exists(checkpoint_dir):
             os.mkdir(checkpoint_dir)
-            print(f'mkdir {checkpoint_dir}')
+            logging.info(f'mkdir {checkpoint_dir}')
         
         self.writer = SummaryWriter(
             log_dir=log_dir
@@ -108,13 +134,18 @@ class Trainer():
             pass
             # model = Light_SER(self.model_config).to(self.device)
         elif "tim_net" in self.config["model_config"]:
-            model = TimNet(n_label=len(self.data_config["label"].keys())).to(self.device)
+            model = TimNet(
+                n_filters=self.data_config["hidden_dim"],
+                n_label=len(self.data_config["label"].keys())).to(self.device)
             print(self.data_config["label"].keys())
         elif "cnn_transformer" in self.config["model_config"]:
             pass
             # model = CNN_Transformer().to(self.device)
+            
         elif "conformer" in self.config["model_config"]:
-            model = CNN_Conformer(self.model_config, n_label=len(self.data_config["label"].keys())).to(self.device)
+            model = CNN_Conformer(
+                self.model_config, 
+                n_label=len(self.data_config["label"].keys())).to(self.device)
         
         return model
             
@@ -144,18 +175,18 @@ class Trainer():
         
         model_state_dict = state_dict["model_state_dict"]
         optim_state_dict = state_dict["optim_state_dict"]
-        
-        print(f'load checkpoint from {path}')        
+
+        logging.info(f'load checkpoint from {path}')        
         
         return {
             "model_state_dict":model_state_dict,
             "optim_state_dict":optim_state_dict
         }
     def train(self):
-        print("########## start training #########")
-        print("################# init model ##################")
+        logging.info("########## start training #########")
+        logging.info("################# init model ##################")
         model = self.init_model()
-        print("############### init optimizer #################")
+        logging.info("############### init optimizer #################")
         optimizer = self.init_optimizer(model)
         
         model.train()
@@ -187,7 +218,7 @@ class Trainer():
                 train_loss = np.mean(train_losses)
                 target_names = list(self.data_config["label"].keys())
                 model.eval()
-                
+                logging.info(f"start validation (epoch={epoch}): ")
                 valid_results = self.evaluate(valid_dl=self.valid_dl, model=model)
                 valid_cls_result = classification_report(
                     y_pred=valid_results["predicts"], 
@@ -195,8 +226,9 @@ class Trainer():
                     output_dict=False, zero_division=0,
                     target_names=target_names)
                 
-                print("########### validation result ###########\n", valid_cls_result)
+                logging.info(f"validation result (epoch={epoch}): \n {valid_cls_result}")
                 
+                logging.info(f"start testing (epoch={epoch}): ")
                 test_results = self.evaluate(valid_dl=self.test_dl, model=model)
                 test_results = classification_report(
                     y_pred=test_results["predicts"], 
@@ -206,7 +238,7 @@ class Trainer():
                 
                 model.train()
                 
-                print("########### test result ###########\n", test_results)
+                logging.info(f"test result (epoch={epoch}): \n{test_results}")
                    
                 valid_cls_result = classification_report(
                     y_pred=valid_results["predicts"], 
@@ -223,24 +255,25 @@ class Trainer():
                     best_wa = valid_cls_result["weighted avg"]["f1-score"]
                     path = f'{self.config["checkpoint_dir"]}/best_war_checkpoint.pt'
                     self.save_checkpoint(path, model=model, optimizer=optimizer, epoch=epoch, loss=train_loss)
-                    print("########### test on current best checkpoint ###########\n", test_results)
+                    logging.info(f"test with current best checkpoint (epoch={epoch}): ")
                     self.test(checkpoint=path,test_dl=self.test_dl)                      
                 # if best_uwa < valid_cls_result["macro avg"]["f1-score"]:
                 #     best_uwa = valid_cls_result["macro avg"]["f1-score"]
                 #     path = f'{self.config["checkpoint_dir"]}/best_uwar_checkpoint.pt'
                 #     self.save_checkpoint(path, model=model, optimizer=optimizer, epoch=epoch, loss=train_loss)
                 
-                # kfold_tqdm.write("############################################")
-                _train_tqdm.write(
-                    "validation result:" + str({
-                        "macro_avg":best_uwa,
-                        "weighted_avg":best_wa,
-                        "accuracy":best_acc,
-                        "epoch":epoch,
-                        "valid_loss":valid_results["loss"],
-                        "train_loss":train_loss
-                        })
-                    )  
+                logging.info("############################################")
+                
+                json_obj = json.dumps({
+                    "weighted_avg":best_wa, 
+                    "epoch":epoch, 
+                    "valid_loss":valid_results["loss"].tolist(),
+                    "train_loss":train_loss
+                    }, indent=4, ensure_ascii=False)
+                
+                message = "validation result: \n" + json_obj
+                logging.info(message)
+                logging.info("############################################")
                 # path = f'{self.config["checkpoint_dir"]}/best_acc_checkpoint.pt'
                 # self.test(checkpoint=path,test_dl=self.test_dl)
                 
@@ -249,16 +282,7 @@ class Trainer():
                 
                 # path = f'{self.config["checkpoint_dir"]}/best_uwar_checkpoint.pt'
                 # self.test(checkpoint=path,test_dl=self.test_dl)
-                 
-        # with open(f'{self.config["model_config"]}.txt', "w", encoding="utf-8") as f:
-        #     np_results = np.array(results).mean(axis=0).tolist()
-        #     results.append(np_results)
-            
-        #     print(results)
-        #     for fold in results:
-        #         fold = list(map(str, fold))
-        #         f.write("\t".join(fold) + "\n")
-                
+                                 
     def save_checkpoint(self, path, model, optimizer, epoch, loss):
         state_dict = {
             "model_state_dict":model.state_dict(),
@@ -295,14 +319,13 @@ class Trainer():
             "predicts":np.array(predicts),
             "labels":np.array(labels),
         }
-    def test(self, checkpoint, test_dl):
-        emo_predicts, emo_labels = [], []
-        
+    def test(self, checkpoint, test_dl):        
         model = self.init_model()            
         state_dict = self.load_checkpoint(checkpoint)
         model.load_state_dict(state_dict["model_state_dict"])
         model.eval()
         target_names = list(self.data_config["label"].keys())
+        
         with torch.no_grad():
             test_results = self.evaluate(valid_dl=test_dl, model=model)
         
@@ -312,7 +335,7 @@ class Trainer():
             output_dict=False, zero_division=0,
             target_names=target_names)
         
-        print("best result on test set: \n",test_cls_result)
+        logging.info(test_cls_result)
         
         test_cls_result = classification_report(
             y_pred=test_results["predicts"], 

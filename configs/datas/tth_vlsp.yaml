@@ -4,8 +4,13 @@ label_path: cleaned_tth_data/train.txt
 feature: mel
 npy_path: tth_train.npy
 
-train_path: tth_train.npy
+train_path: tth_test.npy
 test_path: tth_test.npy
+
+define: &hidden_dim 80
+hidden_dim: *hidden_dim
+
+valid_size: 0.5
 
 audio:
   sample_rate: 22050
