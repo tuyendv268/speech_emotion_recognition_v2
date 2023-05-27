@@ -34,7 +34,8 @@ logging.basicConfig(
     handlers=[
         logging.FileHandler(f"logs/log_{current_time}.log"),
         logging.StreamHandler()
-    ]
+    ],
+    force = True
 )
 
 class Trainer():
