@@ -15,15 +15,16 @@ class Feature_Extractor():
             config["mel"]["mel_fmax"],
         )
     
-    def extract_mfcc(self, wav):
+    def extract_mfcc(self, path):
+        wav, _ = librosa.load(path, sr=self.config["audio"]["sample_rate"])
         mfcc = librosa.feature.mfcc(
             y=wav, 
-            sr=int(config["sample_rate"]),
-            hop_length=int(config["hop_length"]),
-            win_length=int(config["win_length"]),
-            n_mfcc=int(config["n_mfcc"]),
-            fmax=int(config["fmax"]), 
-            fmin=int(config["fmin"]))
+            sr=self.config["audio"]["sample_rate"],
+            hop_length=self.config["stft"]["hop_length"],
+            win_length=self.config["stft"]["win_length"],
+            n_mfcc=int(self.config["mfcc"]["n_mfcc"]),
+            fmax=self.config["mfcc"]["mel_fmax"],
+            fmin=self.config["mfcc"]["mel_fmin"])
         
         return mfcc
     

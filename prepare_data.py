@@ -37,43 +37,48 @@ def prepare_data(config):
         _label = config["label"][_label]
         label = np.zeros(len(config["label"].keys()))
         label[_label-1] = 1
-        
-        _mel = feature_extractor.extract_mel_spectrogram(_path)
-        
-        _mel = np.expand_dims(_mel.T, axis=0)
-        X.append(_mel)
+        if config["feature"] == "mel":
+            _feat = feature_extractor.extract_mel_spectrogram(_path)
+            
+            _feat = np.expand_dims(_feat.T, axis=0)
+        elif config["feature"] == "mfcc":
+            _feat = feature_extractor.extract_mfcc(_path)
+            
+            _feat = np.expand_dims(_feat.T, axis=0)
+
+        X.append(_feat)
         y.append(label)
         
     lengths = [x.shape[1] for x in X]
     max_length = max(lengths)
     if max_length > 256:
         max_length = 256
-    masks, mels = [], []
+    masks, features = [], []
     for x in tqdm(X, desc="padding data"):
         if max_length > x.shape[1]:
-            mels.append(
+            features.append(
                 np.pad(x, ((0, 0), (0, max_length-x.shape[1]), (0,0)),
                 'constant', constant_values=0))
             masks.append([1]*x.shape[1] + [0]*(max_length-x.shape[1]))
         else:
             padding_length = (x.shape[1] - max_length )// 2
-            mels.append(x[:, padding_length:max_length+padding_length])
+            features.append(x[:, padding_length:max_length+padding_length])
             masks.append([1]*max_length)
     
     masks = np.array(masks).astype(np.int8)
-    mels = np.concatenate(mels, axis=0).astype(np.float32)
+    features = np.concatenate(features, axis=0).astype(np.float32)
     labels = np.array(y).astype(np.int8)
     
-    mels = mels.transpose(0, 2, 1)
-    print(mels.shape)
+    features = features.transpose(0, 2, 1)
+    print(features.shape)
     
     datas = {
-        "features":mels,
+        "features":features,
         "masks":masks,
         "labels":labels
     }
 
-    np.save(config["npy_path"], datas, allow_pickle=True)
+    np.save(config["npy_path"].replace(".npy", f'_{config["feature"]}.npy'), datas, allow_pickle=True)
     print(f'save data to {config["npy_path"]}')
     
 if __name__ == "__main__":
