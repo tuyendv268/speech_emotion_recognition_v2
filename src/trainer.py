@@ -35,9 +35,12 @@ class Trainer():
         self.cre_loss = torch.nn.CrossEntropyLoss()
         
         if config["mode"] == "train":
-            train_features, train_labels, train_masks = utils.load_data(
+            train_features, train_masks, train_labels = utils.load_data(
                 path=self.data_config["train_path"]
             )
+            print(train_features.shape)
+            print(train_labels.shape)
+            print(train_masks.shape)
             # train_features, valid_features, train_masks, valid_masks, train_labels, valid_labels = train_test_split(
             #     train_features, train_labels, train_masks, test_size=self.config["valid_size"], random_state=self.config["random_seed"]
             # )
@@ -61,7 +64,6 @@ class Trainer():
             pass
         
         model = self.init_model()
-        print(model)
         model_parameters = filter(lambda p: p.requires_grad, model.parameters())
         params = sum([np.prod(p.size()) for p in model_parameters])
         print(f"num params: {params}")
@@ -107,13 +109,13 @@ class Trainer():
             # model = Light_SER(self.model_config).to(self.device)
         elif "tim_net" in self.config["model_config"]:
             model = TimNet(n_label=len(self.data_config["label"].keys())).to(self.device)
+            print(self.data_config["label"].keys())
         elif "cnn_transformer" in self.config["model_config"]:
             pass
             # model = CNN_Transformer().to(self.device)
         elif "conformer" in self.config["model_config"]:
             model = CNN_Conformer(self.model_config, n_label=len(self.data_config["label"].keys())).to(self.device)
         
-        model.apply(self.init_weight)
         return model
             
     def init_optimizer(self, model):
