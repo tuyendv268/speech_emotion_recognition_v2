@@ -34,29 +34,29 @@ class Trainer():
         self.prepare_diretories_and_logger()
         self.cre_loss = torch.nn.CrossEntropyLoss()
         
+        if config["mode"] == "train":
+            features, masks, labels = utils.load_data(
+                path=self.data_config["train_path"]
+            )
+            train_features, valid_features, train_masks, valid_masks, train_labels, valid_labels = train_test_split(
+                features, masks, labels, test_size=self.config["valid_size"], random_state=self.config["random_seed"]
+            )
+            test_features, test_masks, test_labels = utils.load_data(
+                path=self.data_config["test_path"]
+            )
+            self.train_dl = self.prepare_dataloader(train_features, train_labels, train_masks, mode="train")
+            self.valid_dl = self.prepare_dataloader(valid_features, valid_labels, valid_masks, mode="test")
+            self.test_dl = self.prepare_dataloader(test_features, test_labels, test_masks, mode="test")
+                    
+        elif config["mode"] == "infer":
+            pass
+        
         model = self.init_model()
         print(model)
         model_parameters = filter(lambda p: p.requires_grad, model.parameters())
         params = sum([np.prod(p.size()) for p in model_parameters])
         print(f"num params: {params}")
         
-        if config["mode"] == "train":
-            mels, masks, labels = utils.load_data(
-                path=self.data_config["train_path"]
-            )
-            train_mels, valid_mels, train_masks, valid_masks, train_labels, valid_labels = train_test_split(
-                mels, masks, labels, test_size=self.config["valid_size"], random_state=self.config["random_seed"]
-            )
-            test_mels, test_masks, test_labels = utils.load_data(
-                path=self.data_config["test_path"]
-            )
-            self.train_dl = self.prepare_dataloader(train_mels, train_labels, train_masks, mode="train")
-            self.valid_dl = self.prepare_dataloader(valid_mels, valid_labels, valid_masks, mode="test")
-            self.test_dl = self.prepare_dataloader(test_mels, test_labels, test_masks, mode="test")
-                    
-        elif config["mode"] == "infer":
-            pass
-    
     def init_weight(self, layer):
         if isinstance(layer, nn.Linear):
             torch.nn.init.xavier_uniform_(layer.weight)
@@ -97,13 +97,12 @@ class Trainer():
             pass
             # model = Light_SER(self.model_config).to(self.device)
         elif "tim_net" in self.config["model_config"]:
-            pass
             model = TimNet(n_label=len(self.data_config["label"].keys())).to(self.device)
         elif "cnn_transformer" in self.config["model_config"]:
             pass
             # model = CNN_Transformer().to(self.device)
         elif "conformer" in self.config["model_config"]:
-            model = CNN_Conformer(self.model_config).to(self.device)
+            model = CNN_Conformer(self.model_config, n_label=len(self.data_config["label"].keys())).to(self.device)
         
         model.apply(self.init_weight)
         return model
@@ -143,7 +142,6 @@ class Trainer():
         }
     def train(self):
         print("########## start training #########")
-        results = []    
         print("################# init model ##################")
         model = self.init_model()
         print("############### init optimizer #################")

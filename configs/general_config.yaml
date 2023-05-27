@@ -8,7 +8,7 @@ num_worker: 2
 batch_size: 32
 random_seed: 42
 model_config: configs/models/conformer.yaml
-data_config: configs/datas/tth_vlsp.yaml
+data_config: configs/datas/ravdess.yaml
 
 log_dir: logs
 checkpoint_dir: checkpoints
@@ -16,14 +16,13 @@ warm_up: None
 
 learning_rate: 0.001
 weight_decay: 1e-6
-beta1: 0.91
+beta1: 0.93
 beta2: 0.98
 
 valid_size: 0.1
 test_size: 0.1
 
 augment: spec_augment
-oversampling: False
 max_signal_duration: 4
 evaluate_per_epoch: 1
 

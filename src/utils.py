@@ -7,11 +7,11 @@ import os
 def load_data(path):
     data = np.load(path, allow_pickle=True).item()
     
-    mels = data["mels"]
+    features = data["features"]
     masks = data["masks"]
     labels = data["labels"]
     
-    return mels, masks, labels
+    return features, masks, labels
     
 def spec_augment(spec: np.ndarray, num_mask=2, 
                  freq_masking_max_percentage=0.1, time_masking_max_percentage=0.1):

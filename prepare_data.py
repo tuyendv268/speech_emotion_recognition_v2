@@ -46,21 +46,29 @@ def prepare_data(config):
         
     lengths = [x.shape[1] for x in X]
     max_length = max(lengths)
+    if max_length > 256:
+        max_length = 256
     masks, mels = [], []
     for x in tqdm(X, desc="padding data"):
-        mels.append(
-            np.pad(x, ((0, 0), (0, max_length-x.shape[1]), (0,0)),
-            'constant', constant_values=0))
-        masks.append([1]*x.shape[1] + [0]*(max_length-x.shape[1]))
+        if max_length > x.shape[1]:
+            mels.append(
+                np.pad(x, ((0, 0), (0, max_length-x.shape[1]), (0,0)),
+                'constant', constant_values=0))
+            masks.append([1]*x.shape[1] + [0]*(max_length-x.shape[1]))
+        else:
+            padding_length = (x.shape[1] - max_length )// 2
+            mels.append(x[:, padding_length:max_length+padding_length])
+            masks.append([1]*max_length)
     
     masks = np.array(masks).astype(np.int8)
     mels = np.concatenate(mels, axis=0).astype(np.float32)
     labels = np.array(y).astype(np.int8)
     
+    mels = mels.transpose(0, 2, 1)
     print(mels.shape)
     
     datas = {
-        "mels":mels,
+        "features":mels,
         "masks":masks,
         "labels":labels
     }

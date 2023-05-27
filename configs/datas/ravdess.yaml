@@ -1,10 +1,11 @@
-sample_rate: 48000
-augment: 'None'
-wavs_path: ess_dataset/tth/wavs
-label_path: tth_label_wav_less_than_1s_sample.txt
-feature: npy
+augment: spec_augment
+wavs_path: cleaned_tth_data/wavs
+label_path: cleaned_tth_data/test.txt
+feature: mfcc
+npy_path: tth_test.npy
 
-npy_path: RAVDE.npy
+train_path: ravdess.npy
+test_path: ravdess.npy
 
 label:
   neutral: 0
@@ -15,9 +16,10 @@ label:
   fearful: 5
   disgust: 6
   surprised: 7
+audio:
+  sample_rate: 48000
 
 mfcc:
-  sample_rate: *sample_rate
   hop_length: 256
   win_length: 1024
   n_mfcc: 39

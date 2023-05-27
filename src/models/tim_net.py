@@ -121,7 +121,7 @@ class TimNet(nn.Module):
         self.weight_layer = nn.Parameter(torch.randn(dialations, 1))
         self.cls_head = nn.Linear(n_filters, n_label)
         
-    def forward(self, inputs, lengths=None):
+    def forward(self, inputs, masks=None):
         forward_inputs = inputs
         backward_input = torch.flip(inputs, dims=(-1,))
         
@@ -152,7 +152,7 @@ class TimNet(nn.Module):
         
         output = torch.matmul(output_2, self.weight_layer).squeeze(-1)
         output = self.cls_head(output)
-        return output
+        return None, output
     
 if __name__ == "__main__":
     model = TimNet()

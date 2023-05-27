@@ -169,7 +169,6 @@ class Conv(nn.Module):
         self.dropout = SpatialDropout1D(dropout)
     
     def forward(self, inputs):
-        inputs = inputs.permute(0, 2, 1)
         for conv in self.convs:
             inputs = conv(inputs)
         inputs = self.dropout(inputs)
@@ -532,24 +531,25 @@ class ConformerEncoder(nn.Module):
         batch_size, max_len = inputs.shape[0], inputs.shape[1]
         slf_attn_mask = masks.unsqueeze(1).expand(-1, max_len, -1)
         
-        inputs = inputs + self.position_enc[:, :max_len, :] \
+        outputs = inputs + self.position_enc[:, :max_len, :] \
                 .expand(batch_size, -1, -1)
         
         hidden_states = []
         for enc_layer in self.layers:
-            inputs = enc_layer(
-                inputs=inputs, masks=masks, slf_attn_masks=slf_attn_mask
+            outputs = enc_layer(
+                inputs=outputs, masks=masks, slf_attn_masks=slf_attn_mask
             )
                         
-            hidden_states.append(inputs)
+            hidden_states.append(outputs)
         hidden_states = torch.stack(hidden_states, dim=1)
+        last_hidden_state = outputs
 
-        return inputs, hidden_states
+        return last_hidden_state, hidden_states
 
 
 
 class CNN_Conformer(nn.Module):
-    def __init__(self, config) -> None:
+    def __init__(self, config, n_label) -> None:
         super(CNN_Conformer, self).__init__()
         self.cnn = Conv(
             channels=config["cnn_channels"], 
@@ -575,7 +575,7 @@ class CNN_Conformer(nn.Module):
             query_vector_dim=config["encoder_dim"],
             candidate_vector_dim=config["encoder_dim"])
         
-        self.cls_head = nn.Linear(config["encoder_dim"], 4)
+        self.cls_head = nn.Linear(config["encoder_dim"], n_label)
         
     def get_mask_from_lengths(self, lengths, max_len=None, device=None):
         batch_size = lengths.shape[0]
@@ -592,18 +592,18 @@ class CNN_Conformer(nn.Module):
     
     def forward(self, inputs, masks):
         inputs = self.cnn(inputs)
-        inputs, hiddens = self.conformer(inputs, masks)
+        last_hidden_state, hidden_states = self.conformer(inputs, ~masks)
         
-        batch_size, num_layer, seq_length, embedding_dim = hiddens.shape
-        hiddens = hiddens.view(batch_size, num_layer, -1)
-        outputs = torch.matmul(self.weighted_layers, hiddens)
+        batch_size, num_layer, seq_length, embedding_dim = hidden_states.shape
+        hidden_states = hidden_states.view(batch_size, num_layer, -1)
+        outputs = torch.matmul(self.weighted_layers, hidden_states)
         outputs = outputs.view(batch_size, seq_length, embedding_dim)
         
         seq_embeddings = outputs.contiguous()
-        embedding = self.additive_attention(outputs)
+        embedding = self.additive_attention(seq_embeddings)
         
         output = self.cls_head(embedding)
-        return seq_embeddings, output
+        return None, output
         
         
 if __name__ == "__main__":
