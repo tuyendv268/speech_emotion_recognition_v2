@@ -186,7 +186,8 @@ class Trainer():
             if (epoch+1) % int(self.config["evaluate_per_epoch"])==0:
                 train_loss = np.mean(train_losses)
                 target_names = list(self.data_config["label"].keys())
-                    
+                model.eval()
+                
                 valid_results = self.evaluate(valid_dl=self.valid_dl, model=model)
                 valid_cls_result = classification_report(
                     y_pred=valid_results["predicts"], 
@@ -194,7 +195,7 @@ class Trainer():
                     output_dict=False, zero_division=0,
                     target_names=target_names)
                 
-                print("validation result: \n", valid_cls_result)
+                print("########### validation result ###########\n", valid_cls_result)
                 
                 test_results = self.evaluate(valid_dl=self.test_dl, model=model)
                 test_results = classification_report(
@@ -203,7 +204,9 @@ class Trainer():
                     output_dict=False, zero_division=0,
                     target_names=target_names)
                 
-                print("test result: \n", test_results)
+                model.train()
+                
+                print("########### test result ###########\n", test_results)
                    
                 valid_cls_result = classification_report(
                     y_pred=valid_results["predicts"], 
@@ -220,6 +223,7 @@ class Trainer():
                     best_wa = valid_cls_result["weighted avg"]["f1-score"]
                     path = f'{self.config["checkpoint_dir"]}/best_war_checkpoint.pt'
                     self.save_checkpoint(path, model=model, optimizer=optimizer, epoch=epoch, loss=train_loss)
+                    print("########### test on current best checkpoint ###########\n", test_results)
                     self.test(checkpoint=path,test_dl=self.test_dl)                      
                 # if best_uwa < valid_cls_result["macro avg"]["f1-score"]:
                 #     best_uwa = valid_cls_result["macro avg"]["f1-score"]
