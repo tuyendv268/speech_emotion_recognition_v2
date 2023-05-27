@@ -19,7 +19,7 @@ weight_decay: 1e-6
 beta1: 0.93
 beta2: 0.98
 
-valid_size: 0.3
+valid_size: 0.5
 test_size: 0.1
 
 augment: spec_augment

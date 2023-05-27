@@ -195,6 +195,15 @@ class Trainer():
                     target_names=target_names)
                 
                 print("validation result: \n", valid_cls_result)
+                
+                test_results = self.evaluate(valid_dl=self.test_dl, model=model)
+                test_results = classification_report(
+                    y_pred=test_results["predicts"], 
+                    y_true=test_results["labels"],
+                    output_dict=False, zero_division=0,
+                    target_names=target_names)
+                
+                print("test result: \n", test_results)
                    
                 valid_cls_result = classification_report(
                     y_pred=valid_results["predicts"], 
@@ -211,7 +220,7 @@ class Trainer():
                     best_wa = valid_cls_result["weighted avg"]["f1-score"]
                     path = f'{self.config["checkpoint_dir"]}/best_war_checkpoint.pt'
                     self.save_checkpoint(path, model=model, optimizer=optimizer, epoch=epoch, loss=train_loss)
-                                            
+                    self.test(checkpoint=path,test_dl=self.test_dl)                      
                 # if best_uwa < valid_cls_result["macro avg"]["f1-score"]:
                 #     best_uwa = valid_cls_result["macro avg"]["f1-score"]
                 #     path = f'{self.config["checkpoint_dir"]}/best_uwar_checkpoint.pt'
@@ -231,8 +240,8 @@ class Trainer():
                 # path = f'{self.config["checkpoint_dir"]}/best_acc_checkpoint.pt'
                 # self.test(checkpoint=path,test_dl=self.test_dl)
                 
-                path = f'{self.config["checkpoint_dir"]}/best_war_checkpoint.pt'
-                self.test(checkpoint=path,test_dl=self.test_dl)
+                # path = f'{self.config["checkpoint_dir"]}/best_war_checkpoint.pt'
+                # self.test(checkpoint=path,test_dl=self.test_dl)
                 
                 # path = f'{self.config["checkpoint_dir"]}/best_uwar_checkpoint.pt'
                 # self.test(checkpoint=path,test_dl=self.test_dl)
@@ -299,7 +308,7 @@ class Trainer():
             output_dict=False, zero_division=0,
             target_names=target_names)
         
-        print("test result: \n",test_cls_result)
+        print("best result on test set: \n",test_cls_result)
         
         test_cls_result = classification_report(
             y_pred=test_results["predicts"], 
