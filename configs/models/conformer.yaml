@@ -1,4 +1,4 @@
-encoder_dim: 256
+encoder_dim: 128
 num_layers: 4
 num_attention_heads: 4
 feed_forward_expansion_factor: 4
@@ -14,7 +14,7 @@ cnn_kernels:
   - 3
 cnn_channels:
   - 80
-  - 256
+  - 128
 cnn_dropout: 0.2
 
 addi_attn_dropout: 0.2

@@ -79,7 +79,7 @@ class Temporal_Aware_Block(nn.Module):
         
         
 class TimNet(nn.Module):
-    def __init__(self, n_filters=39, kernel_size=2, n_stacks=1, dialations=8,
+    def __init__(self, n_filters=80, kernel_size=2, n_stacks=1, dialations=8,
                  drop_rate=0.1, n_label=8) -> None:
         super(TimNet, self).__init__()
         
@@ -157,6 +157,6 @@ class TimNet(nn.Module):
 if __name__ == "__main__":
     model = TimNet()
 
-    inputs = torch.randn(32, 39, 51)
+    inputs = torch.randn(32, 80, 51)
     outputs = model(inputs)
-    print(outputs.shape)
+    print(outputs[1].shape)

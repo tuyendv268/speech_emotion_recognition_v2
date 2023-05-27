@@ -35,15 +35,24 @@ class Trainer():
         self.cre_loss = torch.nn.CrossEntropyLoss()
         
         if config["mode"] == "train":
-            features, masks, labels = utils.load_data(
+            train_features, train_labels, train_masks = utils.load_data(
                 path=self.data_config["train_path"]
             )
-            train_features, valid_features, train_masks, valid_masks, train_labels, valid_labels = train_test_split(
-                features, masks, labels, test_size=self.config["valid_size"], random_state=self.config["random_seed"]
-            )
+            # train_features, valid_features, train_masks, valid_masks, train_labels, valid_labels = train_test_split(
+            #     train_features, train_labels, train_masks, test_size=self.config["valid_size"], random_state=self.config["random_seed"]
+            # )
+            # test_features, test_masks, test_labels = utils.load_data(
+            #     path=self.data_config["test_path"]
+            # )
+            
             test_features, test_masks, test_labels = utils.load_data(
                 path=self.data_config["test_path"]
             )
+            
+            test_features, valid_features, test_masks, valid_masks, test_labels, valid_labels = train_test_split(
+                test_features, test_masks, test_labels, test_size=self.config["valid_size"], random_state=self.config["random_seed"]
+            )
+
             self.train_dl = self.prepare_dataloader(train_features, train_labels, train_masks, mode="train")
             self.valid_dl = self.prepare_dataloader(valid_features, valid_labels, valid_masks, mode="test")
             self.test_dl = self.prepare_dataloader(test_features, test_labels, test_masks, mode="test")

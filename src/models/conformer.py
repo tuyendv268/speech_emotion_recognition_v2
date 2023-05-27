@@ -600,8 +600,9 @@ class CNN_Conformer(nn.Module):
         outputs = outputs.view(batch_size, seq_length, embedding_dim)
         
         seq_embeddings = outputs.contiguous()
-        embedding = self.additive_attention(seq_embeddings)
-        
+        # embedding = self.additive_attention(seq_embeddings)
+        embedding = seq_embeddings.mean(dim=1)
+
         output = self.cls_head(embedding)
         return None, output
         
