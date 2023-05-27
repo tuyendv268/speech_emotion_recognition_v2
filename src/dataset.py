@@ -20,15 +20,16 @@ class SER_Dataset(Dataset):
         return labels
     
     def __getitem__(self, index):
+        label = self.labels[index]
+        
         if self.mode == "train":
             feature = self.features[index]
             feature = spec_augment(feature)
+            label = self.smooth_labels(label)
         else:
             feature = self.features[index]
             
         mask = self.masks[index]
-        label = self.labels[index]
-        label = self.smooth_labels(label)
         
         sample = {
             "feature":torch.tensor(feature),
